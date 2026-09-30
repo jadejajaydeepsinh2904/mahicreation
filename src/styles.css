@@ -15,6 +15,10 @@
 .photo-editor legend{display:flex;align-items:center;gap:12px;width:100%;padding:0;font-size:14px}
 .photo-editor legend span{margin-left:auto;color:var(--gold);font-variant-numeric:tabular-nums}
 .photo-help{margin:8px 0;color:#746a5b;font-size:13px;line-height:1.6}
+.photo-cleanup{margin:12px 0;padding:12px 14px;background:#f6f0e7;border:1px solid #e6dccd}
+.photo-cleanup .check{font-size:14px;cursor:pointer}
+.photo-cleanup .check input{flex-shrink:0;margin:3px 0 0}
+.photo-cleanup .photo-help:last-child{margin-bottom:0;font-size:12px}
 .photo-editor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0;margin:12px 0;list-style:none}
 .photo-editor-grid li{min-width:0;overflow:hidden;border:1px solid var(--line);background:var(--soft)}
 .photo-editor-preview{position:relative;aspect-ratio:4/5;background:#eeeae4}

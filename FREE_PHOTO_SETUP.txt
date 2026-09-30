@@ -1,0 +1,50 @@
+MAHI CREATION — મફત ફોટો સફાઈ
+
+આ ZIPની અંદરના તમામ ફોલ્ડર અને ફાઇલો repositoryના મુખ્ય ફોલ્ડરમાં મૂકો.
+src અને public ફોલ્ડર સાથે rootની ફાઇલો પણ અપલોડ કરો. પછી deployment પૂર્ણ થવા દો.
+આ ZIP હાલની 60 સેમ્પલ અને “વિદેશી નહીં, સ્વદેશી અપનાવો”વાળી વેબસાઇટ પર લાગુ કરો.
+
+વાપરવાની રીત
+1. માલિકના login પછી પ્રોડક્ટ ઉમેરો અથવા edit કરો.
+2. “Background સાફ કરો (મફત)” ચાલુ રાખીને ફોટા પસંદ કરો.
+3. સાફ background સાથેનો ફોટો જોઈને “સાચવો” દબાવો.
+4. પરિણામ ન ગમે તો તે ફોટો કાઢો, સફાઈનો વિકલ્પ બંધ કરો અને મૂળ ફોટો ફરી ઉમેરો.
+   આ રીતે મૂળ background રહેશે; આખો ફોટો ક્રીમ ફ્રેમમાં ગોઠવાશે.
+
+ખર્ચ અને પ્રક્રિયા
+- કોઈ paid AI service, API key, subscription કે નવા environment variableની જરૂર નથી.
+- ફોટો સફાઈ browserમાં ચાલે છે; કોઈ બાહ્ય AI સેવાને ફોટો મોકલાતો નથી.
+- પ્રથમ વખત આશરે 16 MBનાં સાધનો તમારી જ website પરથી લોડ થાય છે. Browser તેને cache કરી શકે છે.
+- સામાન્ય customer page ખોલવાથી આ સાધનો download થતા નથી.
+- સામાન્ય internet data અને તમારી હાલની hostingની usage limits લાગુ રહે છે.
+- નવા પસંદ કરેલા ફોટા જ process થાય છે; અગાઉ સાચવેલા ફોટા આપમેળે બદલાતા નથી.
+- JPEG 800 × 1000માં 180 KB સુધી તૈયાર કરીને હાલના photo uploadમાં સાચવાય છે.
+- દરેક પ્રોડક્ટમાં 8 સુધી ફોટા, મુખ્ય ફોટો પસંદ કરવો અને ફોટો કાઢવો ચાલુ રહે છે.
+
+મર્યાદા
+- background સાદો હોય અને પ્રોડક્ટ સ્પષ્ટ હોય ત્યારે વધુ સારું પરિણામ મળે છે.
+- ઘણા વિષયો, જાળીદાર કાપડ, બારીક jewellery અથવા ગૂંચવાયેલા backgroundમાં સફાઈ ભૂલ કરી શકે છે.
+- વસ્તુ પર જ આવેલ watermark સંપૂર્ણ દૂર કરવાની ખાતરી નથી.
+- અસ્પષ્ટ ફોટામાં ન હોય તે વિગત કે પહેલેથી કપાયેલો ભાગ પાછો બનાવી શકાતો નથી.
+- પરિણામ જોઈને જ સાચવો. સફાઈ નિષ્ફળ જાય તો મૂળ backgroundનો વિકલ્પ ઉપલબ્ધ છે.
+- જૂના અથવા ઓછી memoryવાળા browserમાં મૂળ background રાખવો પડી શકે છે.
+
+OPEN SOURCE NOTICES
+Runtime: ONNX Runtime Web 1.22.0, MIT
+https://github.com/microsoft/onnxruntime
+License: public/photo-tools/v1/ONNX_RUNTIME_LICENSE.txt
+
+Model: U²-NetP (U-2-Net), Apache-2.0
+https://github.com/xuebinqin/U-2-Net
+License: public/photo-tools/v1/U2NET_LICENSE.txt
+ONNX model distributed by rembg:
+https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx
+Preprocessing follows rembg's U2netpSession (MIT):
+https://github.com/danielgatis/rembg/blob/main/rembg/sessions/u2netp.py
+License: public/photo-tools/v1/REMBG_LICENSE.txt
+Model SHA-256: 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8
+
+Runtime and model are served locally under /photo-tools/v1/.
+The runtime uses one WASM thread inside a dedicated worker; no COOP/COEP headers are needed.
+Files in this versioned folder are immutable: use a new folder version for future replacements.
+The model checksum is verified before use. All licenses above must remain with these files.
