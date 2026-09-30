@@ -1,0 +1,17 @@
+Validated 30 September 2026.
+PASS: TypeScript compilation.
+PASS: Vite production frontend build.
+PASS: Cloudflare Wrangler deployment packaging dry run.
+PASS: Local D1 schema migration.
+PASS: Integration in local Cloudflare Workers/D1 runtime:
+- Public catalogue and homepage/admin routes.
+- Unauthorized writes rejected.
+- Admin login, HttpOnly cookie, session validation and logout.
+- Cross-origin writes rejected.
+- Invalid prices and invalid image signatures rejected.
+- Product create, update, delete, decimal prices and stock status.
+- WhatsApp number normalization and shop settings persistence.
+- JPEG upload into D1 and retrieval of exact stored bytes.
+
+The user's real Cloudflare account has not been changed or deployed to.
+Follow README.md to create a separate Worker and D1 database in that account.
