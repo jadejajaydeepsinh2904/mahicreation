@@ -1,10 +1,10 @@
 {
   "name": "mahi-creation",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "dev": "npm run build && wrangler dev",
@@ -18,9 +18,7 @@
   "dependencies": {
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "lucide-react": "1.31.0"
-  },
-  "devDependencies": {
+    "lucide-react": "1.31.0",
     "typescript": "5.9.3",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
