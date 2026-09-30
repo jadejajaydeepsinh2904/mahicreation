@@ -1,5 +1,5 @@
 export const MASK_SIZE=320;
-export type PhotoStage='loading'|'cleaning'|'framing'|'uploading';
+export type PhotoStage='loading'|'cleaning'|'framing'|'review'|'uploading';
 export function normalizePhotoPixels(rgba:Uint8ClampedArray):Float32Array{
   const pixels=MASK_SIZE*MASK_SIZE;if(rgba.length!==pixels*4)throw Error('Invalid photo pixels');
   let maximum=1;for(let i=0;i<rgba.length;i+=4)maximum=Math.max(maximum,rgba[i],rgba[i+1],rgba[i+2]);

@@ -1,4 +1,5 @@
 export const MAX_PRODUCT_PHOTOS = 8;
+export const MAX_PRODUCT_PHOTO_BYTES = 512*1024;
 
 // Existing single-photo products continue to work without a data migration.
 export function productImages(product: {image?: string; images?: string[]}): string[] {

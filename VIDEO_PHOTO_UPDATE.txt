@@ -1,0 +1,38 @@
+MAHI CREATION — અનેક વીડિયો અને ફોટાની પસંદગી
+
+આ ZIPને extract કરો. અંદરનાં તમામ folder અને files repositoryના mainમાં એ જ રચનામાં અપલોડ કરો.
+ZIPમાં આવેલા src, shared, server, worker, api, migrations અને rootની ફાઇલો સાથે અપલોડ કરવી જરૂરી છે.
+નવી database tables આપમેળે બને છે. વધારાની service, API key કે environment variable જરૂરી નથી.
+આ અપડેટ તમારી હાલની મફત photo cleanup સુવિધા સાથે કામ કરે છે; જૂની ZIP ફરી અપલોડ કરવાની જરૂર નથી.
+
+વીડિયો
+- એક પ્રોડક્ટમાં 8 ફોટા ઉપરાંત 5 વીડિયો રાખી શકાય.
+- “વીડિયો ઉમેરો”થી એકસાથે ઘણા MP4 અથવા WebM વીડિયો પસંદ કરી શકાય.
+- દરેક વીડિયો વધુમાં વધુ 4 MB. મોટા વીડિયો trim કરીને અથવા ઓછા કદમાં export કરીને ઉમેરો.
+- વધુ browserમાં ચાલે તે માટે MP4માં H.264 video / AAC audio વાપરો. MOV અને HEVCનું આપમેળે conversion થતું નથી.
+- અપલોડ થયેલો વીડિયો જોઈ શકાય, દરેકનો “કાઢો” વિકલ્પ છે. પછી “સાચવો” દબાવો.
+- ગ્રાહક પ્રોડક્ટ ખોલીને ફોટા-વીડિયો વચ્ચે જઈ શકે, play/pause, seek અને fullscreen વાપરી શકે.
+- વીડિયો આપમેળે વગાડાતો નથી. ફોટા સાથે અથવા માત્ર વીડિયો સાથે પણ પ્રોડક્ટ સાચવી શકાય.
+- નવી paid service ઉમેરેલી નથી. હાલના hosting/databaseના data અને storage limits લાગુ રહે છે.
+
+ફોટો ગુણવત્તા
+- સાફ કરેલા ફોટા હવે 1000 × 1250 અને 512 KB સુધી વધુ JPEG ગુણવત્તામાં સાચવાય છે.
+- મૂળ ફોટો પસંદ કરવાથી background, રંગ અને ડિઝાઇન બદલવામાં આવતાં નથી; aspect ratio જળવાય છે. ફક્ત upload માટે JPEG/કદ તૈયાર થાય છે (લાંબી બાજુ વધુમાં વધુ 1400 px).
+- “Background સાફ કરો” ચાલુ હોય ત્યારે અપલોડ પહેલાં મૂળ અને સાફ ફોટાની બાજુબાજુ સરખામણી દેખાય છે.
+- “મૂળ background રાખો”, “આ સાફ ફોટો રાખો” અથવા “આ ફોટો છોડો” પસંદ કરો.
+- આ preview સફાઈના મોડેલને બદલતું નથી. બારીક જ્વેલરી, જાળીદાર કાપડ અને ગૂંચવાયેલા backgroundમાં મફત મોડેલ ખોટો ભાગ કાઢી શકે છે.
+- સેમ્પલ ફોટા અલગથી બનાવેલા catalogue visuals છે. દરેક સામાન્ય ફોટો એ જ ગુણવત્તામાં આપમેળે ફેરવાઈ જવાની ખાતરી નથી.
+- પહેલેથી અસ્પષ્ટ અથવા કપાયેલો ભાગ આપમેળે પાછો બનતો નથી; પ્રોડક્ટ પરનો watermark રહી શકે છે.
+- અગાઉ સાચવેલા ફોટા બદલાતા નથી. જરૂરી ફોટો કાઢીને મૂળ ફાઇલમાંથી ફરી ઉમેરો.
+
+ચકાસણી
+- TypeScript અને production build.
+- સાચી MP4 અને WebM ફાઇલ upload/read roundtrip; MP4 decode ચકાસેલું.
+- 4 MB વીડિયો, D1માં 512 KB chunks, byte-range response અને HEAD.
+- 5 વીડિયો સાથે ફોટા, delete one/all/product, shared media અને જૂના unused uploadsની cleanup.
+- Upload/save rollback, login, CSRF અને જૂના photo-only editorની compatibility.
+- આ સ્થાનિક ચકાસણી છે; live deployment અથવા વાસ્તવિક ફોનના browserમાં પરીક્ષણ નથી.
+
+Limits references:
+https://vercel.com/docs/functions/limitations
+https://developers.cloudflare.com/d1/platform/limits/
