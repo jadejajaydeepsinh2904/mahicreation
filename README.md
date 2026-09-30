@@ -170,6 +170,7 @@ Wrangler prints the local URL. Local data is separate from production.
 - The worker uses parameterized SQL and immutable photo cache URLs.
 - For larger catalogs/high traffic, a future paid architecture may be needed;
   this package deliberately avoids those services for your ₹0 requirement.
+  Cloudflare deployment connected.
 
 ## Validation
 
