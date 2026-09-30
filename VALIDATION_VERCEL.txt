@@ -1,0 +1,27 @@
+MAHI CREATION — Vercel compatibility update — 30 September 2026
+
+PASS: npm install --package-lock-only in a clean directory with no node_modules.
+PASS: npm ci installed the registry packages into that independent directory.
+PASS: package-lock.json contains no link:true, file: or parent/workspace references.
+PASS: TypeScript and Vite production build on Node 22.23.3.
+PASS: Backend entrypoints compiled as Node ESM with .js import resolution.
+PASS: Node 22 API integration using the Vercel Web Request/Response handlers.
+      Cloudflare HTTPS responses were simulated using a real in-memory SQLite
+      database and the real D1 REST request serializer (not a remote D1 account).
+      Checked missing configuration, no unauthenticated writes, wrong/right
+      password, HttpOnly/Secure/SameSite cookies, hashed sessions, CSRF, logout,
+      decimal prices, product create/read/update/delete, sold-out flag, Gujarati
+      text, WhatsApp settings, full 180 KB binary photo roundtrip, BLOB storage,
+      oversize upload rejection, deleted photo cleanup, SQL parameter binding,
+      trusted IP rate limiting, spoofed CF header rejection and upstream failure.
+PASS: Local Cloudflare Worker/D1 integration: auth, CSRF, CRUD, decimals, stock,
+      settings, uploads/readback, homepage and admin routes.
+PASS: SQLite unhex/hex roundtrip in Cloudflare's local D1 runtime.
+
+NOT PERFORMED: Live deployment to Vercel, remote Cloudflare D1 calls with a real
+token, or any paid-plan activation. Provider account settings and live credentials
+remain to be configured by the owner. Vercel Hobby is not licensed for a
+commercial boutique; see VERCEL_SETUP.md for cost and capacity constraints.
+
+This is a changes-only archive for the previous Cloudflare source ZIP.
+Existing products/assets and wrangler.jsonc are not included or overwritten.

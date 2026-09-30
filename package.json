@@ -1,17 +1,19 @@
 {
-  "name": "mahi-creation-cloudflare",
-  "version": "1.0.0",
+  "name": "mahi-creation",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "npm run build && wrangler dev",
     "build": "tsc --noEmit && vite build",
     "deploy": "npm run build && wrangler d1 migrations apply mahi-creation-db --remote && wrangler deploy",
     "db:local": "wrangler d1 migrations apply mahi-creation-db --local",
-    "db:remote": "wrangler d1 migrations apply mahi-creation-db --remote"
+    "db:remote": "wrangler d1 migrations apply mahi-creation-db --remote",
+    "dev:frontend": "vite",
+    "check": "tsc --noEmit"
   },
   "dependencies": {
     "react": "19.2.6",

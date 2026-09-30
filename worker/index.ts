@@ -1,4 +1,6 @@
-interface Env {DB:D1Database;ASSETS:Fetcher;ADMIN_EMAIL:string;ADMIN_PASSWORD?:string}
+import type {Database} from '../server/database.js';
+interface Env {DB:Database;ASSETS:{fetch(request:Request):Promise<Response>};ADMIN_EMAIL:string;ADMIN_PASSWORD?:string;D1_REST?:boolean}
+interface Context {waitUntil(promise:Promise<unknown>):void}
 const categories=['Sarees','Clothing','Jewellery','Accessories','Bags','Other'];
 const json=(data:unknown,status=200,headers:Record<string,string>={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store',...headers}});
 async function digest(text:string){const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));return Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');}
@@ -9,18 +11,18 @@ async function guard(r:Request,env:Env){if(!originOK(r))return json({error:'Inva
 const sessionCookie=(token:string,secure:boolean,age=28800)=>`mahi_admin=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${age}${secure?'; Secure':''}`;
 async function removeUnusedImage(image:string,env:Env){if(!image.startsWith('/api/media/'))return;const ref=await env.DB.prepare('SELECT id FROM products WHERE image=? LIMIT 1').bind(image).first();if(!ref)await env.DB.prepare('DELETE FROM images WHERE id=?').bind(image.slice(11)).run();}
 export default {
- async fetch(r:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
+ async fetch(r:Request,env:Env,ctx:Context):Promise<Response>{
  const url=new URL(r.url),path=url.pathname;
  if(!path.startsWith('/api/'))return env.ASSETS.fetch(r);
  try{
- if(!env.DB)return json({error:'Add the Cloudflare D1 binding as explained in README.md.'},503);
+ if(!env.DB)return json({error:'Configure the D1 database as explained in README.md or VERCEL_SETUP.md.'},503);
  if(path==='/api/catalog'&&r.method==='GET'){
  const [rows,settings,isAdmin]=await Promise.all([env.DB.prepare('SELECT * FROM products ORDER BY created_at DESC').all(),env.DB.prepare('SELECT * FROM settings WHERE id=?').bind('shop').first(),admin(r,env)]);
  return json({products:rows.results,settings:settings??{phone:'',address:''},admin:isAdmin});
  }
  if(path==='/api/admin'&&r.method==='POST'){
  if(!originOK(r))return json({error:'Invalid request origin'},403);
- if(!env.ADMIN_PASSWORD||!env.ADMIN_EMAIL||env.ADMIN_EMAIL==='CHANGE_TO_YOUR_EMAIL')return json({error:'First set ADMIN_EMAIL and the ADMIN_PASSWORD secret in Cloudflare.'},503);
+ if(!env.ADMIN_PASSWORD||!env.ADMIN_EMAIL||env.ADMIN_EMAIL==='CHANGE_TO_YOUR_EMAIL')return json({error:'First set ADMIN_EMAIL and the ADMIN_PASSWORD secret on your hosting provider.'},503);
  const p=await r.json() as {email?:unknown,password?:unknown};
  if(typeof p.email!=='string'||typeof p.password!=='string'||p.password.length>500)return json({error:'Incorrect email or password.'},401);
  const now=Date.now(),ip=r.headers.get('CF-Connecting-IP')??'local',bucket=Math.floor(now/900000),attemptID=await digest(ip+':'+bucket);
@@ -37,10 +39,11 @@ export default {
  }
  if(path.startsWith('/api/media/')&&r.method==='GET'){
  const key=path.slice(11);if(!/^[a-zA-Z0-9.-]+$/.test(key))return new Response('Not found',{status:404});
- const cache=(caches as unknown as {default:Cache}).default;
- const cacheKey=new Request(url.toString(),{method:'GET'});const cached=await cache.match(cacheKey);if(cached)return cached;
- const image=await env.DB.prepare('SELECT bytes,mime FROM images WHERE id=?').bind(key).first<{bytes:number[],mime:string}>();if(!image)return new Response('Not found',{status:404});
- const response=new Response(new Uint8Array(image.bytes),{headers:{'Content-Type':image.mime,'Cache-Control':'public,max-age=31536000,immutable','X-Content-Type-Options':'nosniff'}});ctx.waitUntil(cache.put(cacheKey,response.clone()));return response;
+ const cache=typeof caches==='undefined'?undefined:(caches as unknown as {default?:Cache}).default;
+ const cacheKey=new Request(url.toString(),{method:'GET'});const cached=await cache?.match(cacheKey);if(cached)return cached;
+ const image=await env.DB.prepare(env.D1_REST?'SELECT hex(bytes) AS bytes_hex,mime FROM images WHERE id=?':'SELECT bytes,mime FROM images WHERE id=?').bind(key).first<{bytes?:number[],bytes_hex?:string,mime:string}>();if(!image)return new Response('Not found',{status:404});
+ const bytes=env.D1_REST?Uint8Array.from(image.bytes_hex?.match(/.{2}/g)??[],pair=>parseInt(pair,16)):new Uint8Array(image.bytes??[]);
+ const response=new Response(bytes,{headers:{'Content-Type':image.mime,'Cache-Control':'public,max-age=31536000,immutable','X-Content-Type-Options':'nosniff'}});if(cache)ctx.waitUntil(cache.put(cacheKey,response.clone()));return response;
  }
  if(['/api/products','/api/settings','/api/upload'].includes(path)){
  const allowed=path==='/api/products'?['POST','DELETE']:['POST'];if(!allowed.includes(r.method))return json({error:'Method not allowed'},405);
@@ -70,4 +73,4 @@ export default {
  return json({error:'Not found'},404);
  }catch(e){console.error('MAHI API error',e);return json({error:'Could not connect or save. Please try again. Check D1 setup if this is your first deploy.'},503);}
  }
-} satisfies ExportedHandler<Env>;
+};
