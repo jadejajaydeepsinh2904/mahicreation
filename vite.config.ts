@@ -1,2 +1,3 @@
 import {defineConfig} from 'vite';
-export default defineConfig({esbuild:{jsx:'automatic'},build:{outDir:'dist'}});
+import {fileURLToPath} from 'node:url';
+export default defineConfig({esbuild:{jsx:'automatic'},build:{outDir:'dist',rollupOptions:{input:{main:fileURLToPath(new URL('./index.html',import.meta.url)),demo:fileURLToPath(new URL('./demo.html',import.meta.url))}}}});
