@@ -9,9 +9,9 @@
   "scripts": {
     "dev": "npm run build && wrangler dev",
     "build": "tsc --noEmit && vite build",
-    "deploy": "npm run build && wrangler d1 migrations apply mahi-creation-db --remote && wrangler deploy",
-    "db:local": "wrangler d1 migrations apply mahi-creation-db --local",
-    "db:remote": "wrangler d1 migrations apply mahi-creation-db --remote",
+    "deploy": "npm run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote",
     "dev:frontend": "vite",
     "check": "tsc --noEmit"
   },

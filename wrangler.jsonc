@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mahi-creation",
+  "name": "mahicreation",
   "main": "worker/index.ts",
   "compatibility_date": "2026-05-22",
   "workers_dev": true,
@@ -8,13 +8,19 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*"
+    ]
   },
-  "d1_databases": [{
-    "binding": "DB",
-    "database_name": "mahi-creation-db",
-    "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
-    "migrations_dir": "migrations"
-  }],
-  "vars": { "ADMIN_EMAIL": "CHANGE_TO_YOUR_EMAIL" }
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mahicreation-db",
+      "database_id": "a620453a-3395-4881-bb3b-727a02c77039",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "ADMIN_EMAIL": "CHANGE_TO_YOUR_EMAIL"
+  }
 }
