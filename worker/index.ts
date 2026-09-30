@@ -1,6 +1,7 @@
 import type {Database} from '../server/database.js';
 import {ensureSchema} from '../server/schema.js';
 import {handleAdmin,isAdmin,originOK,shopConfigured,normalizePhone,validPhone} from '../server/auth.js';
+import {databaseFailure} from '../server/database-error.js';
 interface Env {DB:Database;ASSETS:{fetch(request:Request):Promise<Response>};ADMIN_EMAIL:string;ADMIN_PASSWORD?:string;D1_REST?:boolean}
 interface Context {waitUntil(promise:Promise<unknown>):void}
 const categories=['Sarees','Clothing','Jewellery','Accessories','Bags','Other'];
@@ -11,9 +12,11 @@ export default {
  async fetch(r:Request,env:Env,ctx:Context):Promise<Response>{
  const url=new URL(r.url),path=url.pathname;
  if(!path.startsWith('/api/'))return env.ASSETS.fetch(r);
+ let stage='schema';
  try{
  if(!env.DB)return json({error:path==='/api/admin'?'Cloudflareમાં DB નામનું D1 binding જોડવાનું બાકી છે.':'દુકાન અત્યારે લોડ થઈ શકતી નથી. થોડી વાર પછી પ્રયત્ન કરો.',code:'DATABASE_NOT_READY'},503);
  await ensureSchema(env.DB);
+ stage=path==='/api/admin'?'admin':path==='/api/catalog'?'catalog':path.startsWith('/api/media/')?'media':'write';
  if(path==='/api/admin')return await handleAdmin(r,env);
  if(path==='/api/catalog'&&r.method==='GET'){
  const [rows,settings,authenticated,configured]=await Promise.all([env.DB.prepare('SELECT * FROM products ORDER BY created_at DESC').all(),env.DB.prepare('SELECT * FROM settings WHERE id=?').bind('shop').first<{phone:string,address:string}>(),isAdmin(r,env),shopConfigured(env)]);
@@ -55,6 +58,6 @@ export default {
  }
  }
  return json({error:'Not found'},404);
- }catch(e){console.error('MAHI API request failed');return json({error:path==='/api/admin'?'દુકાનના database સાથે જોડાણ થયું નથી. Hostingમાં DB binding અથવા D1 settings તપાસો.':'અત્યારે વિગતો લોડ અથવા સાચવી શકાઈ નથી. ફરી પ્રયત્ન કરો.',code:'DATABASE_UNAVAILABLE'},503);}
+ }catch(e){const failure=databaseFailure(e,stage);console.error('MAHI database error',failure.detail);return json(path==='/api/admin'?{error:failure.error,code:'DATABASE_UNAVAILABLE',diagnostic:failure.detail}:{error:'અત્યારે વિગતો લોડ અથવા સાચવી શકાઈ નથી. ફરી પ્રયત્ન કરો.',code:'DATABASE_UNAVAILABLE'},503);}
  }
 };

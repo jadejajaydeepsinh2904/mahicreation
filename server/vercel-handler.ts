@@ -1,5 +1,6 @@
 import worker from '../worker/index.js';
 import {D1RestDatabase} from './d1-rest.js';
+import {databaseFailure} from './database-error.js';
 let cachedDatabase: {configuration:string; db:D1RestDatabase}|undefined;
 
 export async function handle(request: Request, path?: string): Promise<Response> {
@@ -27,8 +28,11 @@ export async function handle(request: Request, path?: string): Promise<Response>
       ADMIN_EMAIL: process.env.ADMIN_EMAIL?.trim()??'',
       ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
     }, {waitUntil: () => {}});
-  } catch {
-    console.error('MAHI: check the server-side D1 environment settings.');
-    return Response.json({error: 'દુકાન સાથે જોડાઈ શકાતું નથી. Database settings તપાસો અને ફરી પ્રયત્ન કરો.'}, {status: 503, headers: {'Cache-Control': 'no-store'}});
+  } catch (error) {
+    const failure = databaseFailure(error, 'configuration');
+    console.error('MAHI database error', failure.detail);
+    const admin = (path ?? new URL(request.url).pathname) === '/api/admin';
+    return Response.json(admin ? {error: failure.error, diagnostic: failure.detail} :
+      {error: 'દુકાન અત્યારે લોડ થઈ શકતી નથી. થોડા સમય પછી પ્રયત્ન કરો.'}, {status: 503, headers: {'Cache-Control': 'no-store'}});
   }
 }

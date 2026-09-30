@@ -1,9 +1,10 @@
 import type {Database, QueryResult, Statement} from './database.js';
+import {DatabaseError} from './database-error.js';
 
 interface Query { sql: string; params: string[] }
 interface D1Response {
   success: boolean;
-  result?: QueryResult[];
+  result?: (Partial<QueryResult> & {error?: unknown; errors?: {code?: number}[]})[];
   errors?: {code?: number; message?: string}[];
 }
 
@@ -53,10 +54,16 @@ export function encodeQuery(sql: string, values: unknown[]): Query {
 
 export class D1RestDatabase implements Database {
   private readonly endpoint: string;
-  constructor(accountID: string, databaseID: string, private readonly token: string) {
-    if (!/^[a-f0-9]{32}$/i.test(accountID) || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(databaseID) || !token.trim()) {
-      throw new Error('Invalid Cloudflare D1 configuration');
-    }
+  private readonly token: string;
+  constructor(accountID: string, databaseID: string, token: string) {
+    if (!/^[a-f0-9]{32}$/i.test(accountID)) throw new DatabaseError('D1_ACCOUNT_FORMAT');
+    if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(databaseID)) throw new DatabaseError('D1_DATABASE_FORMAT');
+    // Accept a copied Authorization value or a quoted token without including
+    // that formatting in the actual Bearer credential. Never accept a command.
+    const unquote = (value: string) => ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))) ? value.slice(1, -1).trim() : value;
+    this.token = unquote(unquote(token.trim()).replace(/^Bearer\s+/i, '').trim());
+    if (!/^[A-Za-z0-9_-]+$/.test(this.token)) throw new DatabaseError('D1_TOKEN_FORMAT');
     this.endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountID}/d1/database/${databaseID}/query`;
   }
   prepare(sql: string): Statement { return new RestStatement(this, sql); }
@@ -71,18 +78,36 @@ export class D1RestDatabase implements Database {
   async execute(queries: Query[]): Promise<QueryResult[]> {
     // Do not retry writes automatically: the database may have committed before
     // an HTTP timeout. Expose a failure so the owner can check the saved data.
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: {'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json'},
-      body: JSON.stringify(queries.length === 1 ? queries[0] : {batch: queries}),
-      signal: AbortSignal.timeout(12000),
-    });
-    const data = await response.json() as D1Response;
-    if (!response.ok || !data.success || !Array.isArray(data.result) || data.result.length !== queries.length || data.result.some(row => !row.success)) {
-      // Never log the token, request headers, query values or upstream response.
-      throw new Error(`D1 query failed (HTTP ${response.status}, code ${data.errors?.[0]?.code ?? 'unknown'})`);
+    let response: Response;
+    try {
+      response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify(queries.length === 1 ? queries[0] : {batch: queries}),
+        signal: AbortSignal.timeout(12000),
+      });
+    } catch (error) {
+      throw new DatabaseError(error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name) ? 'D1_TIMEOUT' : 'D1_NETWORK');
     }
-    return data.result.map(row => ({...row, results: row.results ?? []}));
+    let data: D1Response | undefined;
+    try { data = await response.json() as D1Response; } catch (error) {
+      if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) throw new DatabaseError('D1_TIMEOUT', response.status);
+    }
+    const code = Array.isArray(data?.errors) ? data.errors.find(e => e && Number.isSafeInteger(e.code))?.code : undefined;
+    if (response.status === 401 || response.status === 403) throw new DatabaseError('D1_AUTH', response.status, code);
+    if (response.status === 404) throw new DatabaseError('D1_NOT_FOUND', response.status, code);
+    if (response.status === 429) throw new DatabaseError('D1_RATE_LIMIT', response.status, code);
+    if (response.status >= 500) throw new DatabaseError('D1_UPSTREAM', response.status, code);
+    if (!response.ok || data?.success === false) throw new DatabaseError('D1_REQUEST', response.status, code);
+    if (data?.success !== true || !Array.isArray(data.result) ||
+        data.result.some(row => !row || typeof row !== 'object' || Array.isArray(row))) throw new DatabaseError('D1_RESPONSE', response.status, code);
+    const failed = data.result.find(row => row.success === false || row.error || (Array.isArray(row.errors) && row.errors.length));
+    if (failed) throw new DatabaseError('D1_SQL', response.status, Array.isArray(failed.errors) ? failed.errors.find(e => e && Number.isSafeInteger(e.code))?.code ?? code : code);
+    if (data.result.length !== queries.length || data.result.some(row => (row.success !== undefined && row.success !== true) ||
+        (row.results !== undefined && !Array.isArray(row.results)))) throw new DatabaseError('D1_RESPONSE', response.status, code);
+    // The documented per-query success and results fields are optional. The
+    // envelope must still explicitly succeed, and explicit query errors fail.
+    return data.result.map(row => ({success: true, meta: row.meta, results: row.results ?? []}));
   }
 }
 
