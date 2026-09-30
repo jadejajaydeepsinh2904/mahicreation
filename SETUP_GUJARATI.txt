@@ -1,0 +1,25 @@
+MAHI CREATION — નવી સુવિધાઓ ચાલુ કરવાની રીત
+
+1. ZIPને Extract All કરો.
+2. mahicreation repositoryની main branchમાં અંદરની files અને folders upload કરો.
+   src, server, worker અને migrations folderનાં નામ/રસ્તા એ જ રાખો.
+3. Commit changes કરો અને build successful થવા દો.
+
+માલિકનું setup માત્ર એક વાર:
+4. Cloudflare → mahi-creation → Settings → Variables and Secrets → Add.
+5. Type = Secret. Name = ADMIN_PASSWORD.
+   Valueમાં તમારો પોતાનો લાંબો ગુપ્ત setup code નાખો અને Save / Deploy કરો.
+   આ code GitHubમાં અથવા જાહેર ફાઇલમાં મૂકશો નહીં.
+6. તમારી Cloudflare વેબસાઇટ → દુકાનનું લોગિન ખોલો.
+7. setup code, login email, નવો password, WhatsApp નંબર અને સરનામું ભરો.
+8. દુકાન શરૂ કરો દબાવો.
+
+પછી પ્રોડક્ટ ઉમેરો, ફોટો/ભાવ/સ્ટોક બદલો અને WhatsAppની વિગતો સાચવો.
+Email / Password બટનથી login વિગતો બદલી શકશો.
+Password ભૂલી જાઓ તો hostingનો ગુપ્ત code વાપરી reset કરી શકશો.
+
+ખરો WhatsApp નંબર, email, સરનામું અને products તમે ફોર્મમાં ભરી શકશો.
+કોઈ અજાણ્યો નંબર કે તૈયાર જાહેર password મૂકવામાં આવ્યો નથી.
+
+Vercel વેબસાઇટ પર પણ એ જ database જોડવા VERCEL_SETUP.md જુઓ.
+ફક્ત successful deployment થવાથી Vercelનાં database variables સેટ થતા નથી.

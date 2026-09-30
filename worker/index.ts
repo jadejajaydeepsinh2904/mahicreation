@@ -1,41 +1,23 @@
 import type {Database} from '../server/database.js';
+import {ensureSchema} from '../server/schema.js';
+import {handleAdmin,isAdmin,originOK,shopConfigured,normalizePhone,validPhone} from '../server/auth.js';
 interface Env {DB:Database;ASSETS:{fetch(request:Request):Promise<Response>};ADMIN_EMAIL:string;ADMIN_PASSWORD?:string;D1_REST?:boolean}
 interface Context {waitUntil(promise:Promise<unknown>):void}
 const categories=['Sarees','Clothing','Jewellery','Accessories','Bags','Other'];
 const json=(data:unknown,status=200,headers:Record<string,string>={})=>Response.json(data,{status,headers:{'Cache-Control':'no-store',...headers}});
-async function digest(text:string){const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));return Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');}
-function tokenFrom(r:Request){const value=(r.headers.get('Cookie')??'').split(';').map(x=>x.trim()).find(x=>x.startsWith('mahi_admin='));if(!value)return '';try{return decodeURIComponent(value.slice(11));}catch{return '';}}
-function originOK(r:Request){const origin=r.headers.get('Origin');return !origin||origin===new URL(r.url).origin;}
-async function admin(r:Request,env:Env){const token=tokenFrom(r);if(!/^[a-f0-9]{64}$/.test(token)||!env.ADMIN_PASSWORD)return false;const row=await env.DB.prepare('SELECT expires_at FROM sessions WHERE token_hash=?').bind(await digest(token)).first<{expires_at:number}>();return !!row&&row.expires_at>Date.now();}
-async function guard(r:Request,env:Env){if(!originOK(r))return json({error:'Invalid request origin'},403);if(!await admin(r,env))return json({error:'દુકાનનું લોગિન ફરી કરો. Please sign in at /admin.'},403);return null;}
-const sessionCookie=(token:string,secure:boolean,age=28800)=>`mahi_admin=${token}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${age}${secure?'; Secure':''}`;
+async function guard(r:Request,env:Env){if(!originOK(r))return json({error:'Invalid request origin'},403);if(!await isAdmin(r,env))return json({error:'દુકાનનું લોગિન ફરી કરો. Please sign in at /admin.'},401);return null;}
 async function removeUnusedImage(image:string,env:Env){if(!image.startsWith('/api/media/'))return;const ref=await env.DB.prepare('SELECT id FROM products WHERE image=? LIMIT 1').bind(image).first();if(!ref)await env.DB.prepare('DELETE FROM images WHERE id=?').bind(image.slice(11)).run();}
 export default {
  async fetch(r:Request,env:Env,ctx:Context):Promise<Response>{
  const url=new URL(r.url),path=url.pathname;
  if(!path.startsWith('/api/'))return env.ASSETS.fetch(r);
  try{
- if(!env.DB)return json({error:'Configure the D1 database as explained in README.md or VERCEL_SETUP.md.'},503);
+ if(!env.DB)return json({error:path==='/api/admin'?'Cloudflareમાં DB નામનું D1 binding જોડવાનું બાકી છે.':'દુકાન અત્યારે લોડ થઈ શકતી નથી. થોડી વાર પછી પ્રયત્ન કરો.',code:'DATABASE_NOT_READY'},503);
+ await ensureSchema(env.DB);
+ if(path==='/api/admin')return await handleAdmin(r,env);
  if(path==='/api/catalog'&&r.method==='GET'){
- const [rows,settings,isAdmin]=await Promise.all([env.DB.prepare('SELECT * FROM products ORDER BY created_at DESC').all(),env.DB.prepare('SELECT * FROM settings WHERE id=?').bind('shop').first(),admin(r,env)]);
- return json({products:rows.results,settings:settings??{phone:'',address:''},admin:isAdmin});
- }
- if(path==='/api/admin'&&r.method==='POST'){
- if(!originOK(r))return json({error:'Invalid request origin'},403);
- if(!env.ADMIN_PASSWORD||!env.ADMIN_EMAIL||env.ADMIN_EMAIL==='CHANGE_TO_YOUR_EMAIL')return json({error:'First set ADMIN_EMAIL and the ADMIN_PASSWORD secret on your hosting provider.'},503);
- const p=await r.json() as {email?:unknown,password?:unknown};
- if(typeof p.email!=='string'||typeof p.password!=='string'||p.password.length>500)return json({error:'Incorrect email or password.'},401);
- const now=Date.now(),ip=r.headers.get('CF-Connecting-IP')??'local',bucket=Math.floor(now/900000),attemptID=await digest(ip+':'+bucket);
- const result=await env.DB.prepare('INSERT INTO login_attempts (id,attempts,expires_at) VALUES (?,1,?) ON CONFLICT(id) DO UPDATE SET attempts=attempts+1 RETURNING attempts').bind(attemptID,now+900000).first<{attempts:number}>();
- if((result?.attempts??99)>10)return json({error:'Too many attempts. Try again after 15 minutes.'},429);
- const [a,b]=await Promise.all([digest(p.password),digest(env.ADMIN_PASSWORD)]);let different=0;for(let i=0;i<a.length;i++)different|=a.charCodeAt(i)^b.charCodeAt(i);
- if(different||p.email.toLowerCase()!==env.ADMIN_EMAIL.toLowerCase())return json({error:'Incorrect email or password.'},401);
- const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
- await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),env.DB.prepare('DELETE FROM login_attempts WHERE expires_at < ?').bind(now),env.DB.prepare('INSERT INTO sessions(token_hash,expires_at) VALUES (?,?)').bind(await digest(token),now+28800000)]);
- return json({ok:true},200,{'Set-Cookie':sessionCookie(token,url.protocol==='https:')});
- }
- if(path==='/api/admin'&&r.method==='DELETE'){
- if(!originOK(r))return json({error:'Invalid request origin'},403);const token=tokenFrom(r);if(token)await env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await digest(token)).run();return json({ok:true},200,{'Set-Cookie':sessionCookie('',url.protocol==='https:',0)});
+ const [rows,settings,authenticated,configured]=await Promise.all([env.DB.prepare('SELECT * FROM products ORDER BY created_at DESC').all(),env.DB.prepare('SELECT * FROM settings WHERE id=?').bind('shop').first<{phone:string,address:string}>(),isAdmin(r,env),shopConfigured(env)]);
+ return json({products:rows.results,settings:settings??{phone:'',address:''},admin:authenticated,demo:!configured&&!rows.results.length&&!settings?.phone});
  }
  if(path.startsWith('/api/media/')&&r.method==='GET'){
  const key=path.slice(11);if(!/^[a-zA-Z0-9.-]+$/.test(key))return new Response('Not found',{status:404});
@@ -48,6 +30,8 @@ export default {
  if(['/api/products','/api/settings','/api/upload'].includes(path)){
  const allowed=path==='/api/products'?['POST','DELETE']:['POST'];if(!allowed.includes(r.method))return json({error:'Method not allowed'},405);
  const blocked=await guard(r,env);if(blocked)return blocked;
+ if(path!=='/api/upload'&&!r.headers.get('Content-Type')?.includes('application/json'))return json({error:'Invalid request'},415);
+ if(Number(r.headers.get('Content-Length')??0)>(path==='/api/upload'?220000:16000))return json({error:'Request too large'},413);
  if(path==='/api/products'&&r.method==='POST'){
  const p=await r.json() as Record<string,unknown>;
  if(!p||typeof p.name!=='string'||!p.name.trim()||p.name.length>150||typeof p.category!=='string'||!categories.includes(p.category)||typeof p.price!=='number'||!Number.isFinite(p.price)||p.price<0||p.price>1e8)return json({error:'Enter a product name, category and valid price.'},400);
@@ -61,7 +45,7 @@ export default {
  const p=await r.json() as {id?:unknown};if(typeof p.id!=='string')return json({error:'Invalid product'},400);const old=await env.DB.prepare('SELECT image FROM products WHERE id=?').bind(p.id).first<{image:string}>();await env.DB.prepare('DELETE FROM products WHERE id=?').bind(p.id).run();if(old?.image)await removeUnusedImage(old.image,env);return json({ok:true});
  }
  if(path==='/api/settings'){
- const p=await r.json() as {phone?:unknown,address?:unknown};const phone=String(p.phone??'').replace(/[\s()+-]/g,'');if(phone&&!/^\d{10,15}$/.test(phone))return json({error:'Enter a valid WhatsApp number.'},400);await env.DB.prepare('INSERT INTO settings(id,phone,address) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET phone=excluded.phone,address=excluded.address').bind('shop',phone.length===10?'91'+phone:phone,String(p.address??'').slice(0,500)).run();return json({ok:true});
+ const p=await r.json() as {phone?:unknown,address?:unknown};const phone=normalizePhone(p.phone);if(!validPhone(phone))return json({error:'Enter a valid WhatsApp number.'},400);await env.DB.prepare('INSERT INTO settings(id,phone,address) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET phone=excluded.phone,address=excluded.address').bind('shop',phone,String(p.address??'').slice(0,500)).run();return json({ok:true});
  }
  if(path==='/api/upload'){
  const f=(await r.formData()).get('file');if(!(f instanceof File)||f.type!=='image/jpeg'||f.size>180*1024||f.size<4)return json({error:'Choose a photo. The website automatically optimizes it for free storage.'},400);
@@ -71,6 +55,6 @@ export default {
  }
  }
  return json({error:'Not found'},404);
- }catch(e){console.error('MAHI API error',e);return json({error:'Could not connect or save. Please try again. Check D1 setup if this is your first deploy.'},503);}
+ }catch(e){console.error('MAHI API request failed');return json({error:path==='/api/admin'?'દુકાનના database સાથે જોડાણ થયું નથી. Hostingમાં DB binding અથવા D1 settings તપાસો.':'અત્યારે વિગતો લોડ અથવા સાચવી શકાઈ નથી. ફરી પ્રયત્ન કરો.',code:'DATABASE_UNAVAILABLE'},503);}
  }
 };

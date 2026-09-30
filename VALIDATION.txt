@@ -1,17 +1,23 @@
-Validated 30 September 2026.
-PASS: TypeScript compilation.
-PASS: Vite production frontend build.
-PASS: Cloudflare Wrangler deployment packaging dry run.
-PASS: Local D1 schema migration.
-PASS: Integration in local Cloudflare Workers/D1 runtime:
-- Public catalogue and homepage/admin routes.
-- Unauthorized writes rejected.
-- Admin login, HttpOnly cookie, session validation and logout.
-- Cross-origin writes rejected.
-- Invalid prices and invalid image signatures rejected.
-- Product create, update, delete, decimal prices and stock status.
-- WhatsApp number normalization and shop settings persistence.
-- JPEG upload into D1 and retrieval of exact stored bytes.
+MAHI CREATION 1.3.0 — validation
 
-The user's real Cloudflare account has not been changed or deployed to.
-Follow README.md to create a separate Worker and D1 database in that account.
+PASS — TypeScript and Vite production build.
+PASS — Fresh local Cloudflare Worker / D1: idempotent schema initialization.
+PASS — Owner setup requires a server-held secret; duplicate setup is blocked.
+PASS — Login, session cookie flags, logout, password change and recovery.
+PASS — Password change and recovery invalidate older sessions immediately.
+PASS — Unauthorized product/settings writes and cross-origin writes are rejected.
+PASS — Login attempt limiting.
+PASS — Product create, edit, delete, decimal prices and stock availability.
+PASS — WhatsApp number/address persistence and Gujarati digit normalization.
+PASS — Uploaded media byte storage/read and invalid image/phone rejection.
+PASS — Empty shop after setup does not reintroduce demo products.
+PASS — Vercel function integration backed by SQLite and a simulated D1 REST API:
+       legacy login, migration to the database owner account, database-only login,
+       HTTPS cookie flags, 180 KB BLOB roundtrip, IP spoof protection, errors.
+PASS — Stored account credentials contain salted hashes, not readable passwords.
+
+Not performed: live deployment, real account login, real product/contact entry.
+A desktop/mobile browser rendering test could not run because this environment
+could not obtain its browser executable. No visual QA pass is claimed.
+The code update is delivered as a changes-only ZIP for the owner to upload.
+No real credentials, production database writes or GitHub writes were used.
