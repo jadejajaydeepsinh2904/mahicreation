@@ -1,0 +1,54 @@
+MAHI CREATION — સ્ક્રોલ FLOW UPDATE
+
+આપણી હાલની ક્રીમ, ગોલ્ડ અને મૂળ ડાર્ક ટેક્સ્ટની થીમ જ રાખી છે.
+રીલમાંથી સ્ક્રોલ અને પ્રોડક્ટ બતાવવાના flowની પ્રેરણા લીધી છે.
+
+શું ઉમેર્યું છે?
+• મુખ્ય ફોટામાં હળવો scroll zoom અને પહેલી મુલાકાતે ટૂંકું ગોલ્ડ curtain animation.
+• છ કેટેગરી માટે ફોટાવાળા arched cards.
+• કમ્પ્યુટરમાં ચાલતી પ્રોડક્ટ પંક્તિ; Pause બટનથી રોકી શકાય.
+• મોબાઇલમાં આ પંક્તિ આંગળીથી બાજુમાં સરકાવી શકાય.
+• ક્રીમ–ગોલ્ડ રંગનો લહેરવાળો પ્રસંગ/કલેક્શન વિભાગ.
+• નાનો ફોટો પસંદ કરતાં બદલાતો મોટો પ્રોડક્ટ ફોટો, ભાવ અને બેગ બટન.
+• નીચે કેટેગરી પસંદ કરતાં ખુલતા મોટા ફોટાવાળા cards.
+• સ્ક્રોલ કરતાં હળવેથી દેખાતા વિભાગો.
+• ગુજરાતી લખાણ માટે વેબસાઇટ સાથેના fonts; બહારની font service જરૂરી નથી.
+• મુખ્ય ફોટો WebPમાં: અંદાજે 2.1 MBને બદલે 153 KB.
+
+પહેલાંથી રહેલાં કામો
+60 sample products (દરેક categoryમાં 10), પોતાની product list, search/filter,
+બેગ, WhatsApp, owner login, photo/video upload-delete અને original photoનો વિકલ્પ યથાવત છે.
+નવી પ્રોડક્ટ આ જ flowના વિભાગોમાં આપમેળે દેખાશે.
+સેમ્પલ પેજ: /demo.html
+
+GitHubમાં કેવી રીતે મૂકવું?
+1. આ ZIPને Extract કરો.
+2. તમારા jadejajaydeepsinh2904/mahicreation repositoryની મુખ્ય જગ્યાએ જાઓ.
+3. અંદરના src અને public folders તેમની અંદરની files સાથે upload કરો.
+4. srcની filesને repositoryની બહારની મુખ્ય જગ્યાએ અલગથી ન મૂકશો.
+5. Commit changes કર્યા પછી Vercel deployment સફળ થાય ત્યાં સુધી જુઓ.
+6. પછી તમારી વેબસાઇટ અને /demo.html ખોલીને refresh કરો.
+
+ફાઇલની જગ્યાઓ:
+src/App.tsx
+src/StorefrontFlow.tsx
+src/storefront-flow.css
+public/hero-flow.webp
+public/fonts/noto-sans-gujarati-400.woff2
+public/fonts/noto-sans-gujarati-700.woff2
+public/fonts/noto-serif-gujarati-400.woff2
+public/fonts/LICENSE-noto-sans-gujarati.txt
+public/fonts/LICENSE-noto-serif-gujarati.txt
+
+નવા tokens, paid APIs, database migration કે નવા npm packagesની જરૂર નથી.
+આ ZIPમાં node_modules, dist અથવા secrets નથી.
+
+ચકાસણી:
+Production build અને TypeScript ચકાસણી સફળ.
+સ્થાનિક Chromium browserમાં desktop, 320/390px mobile અને tablet widths ચકાસ્યા.
+પ્રોડક્ટ બદલવી, વિગતો, બેગ, category/search/sort, Pause, sample isolation,
+ગુજરાતી લખાણ, owner add/edit/settings forms અને photo/video gallery ચકાસ્યા.
+Reduced motion પસંદ કરેલું હોય તો animation બંધ રહે છે.
+
+આ update હજી live publish કરેલું નથી. તમે GitHubમાં upload કર્યા પછી deployment થશે.
+આ changes ZIP GitHub main: 9f76393778ec23a2a29ede770fd2bccc439d9f39 પરથી તૈયાર છે.
